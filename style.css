@@ -3,3 +3,5 @@
 .footer-icon{display:block;margin:0 auto 12px}.footer-motto{margin:0 0 14px}.footer-credit{margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-style:normal;line-height:1.8;letter-spacing:.4px}
 
 .footer-credit em{font-family: Lora,Georgia,serif;font-style:italic}@media(min-width:850px){.footer-credit{white-space:nowrap}}
+
+.footer-credit .footer-icon{display:inline-block;width:24px;height:24px;margin:0 9px 0 0;vertical-align:middle}
