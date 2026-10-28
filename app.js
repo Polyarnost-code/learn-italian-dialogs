@@ -1,3 +1,4 @@
+import {preferredVoice} from './voices.js';
 import {parseDialog,guessGender,compareReply} from './dialog.js';
 const $=id=>document.getElementById(id),synth=window.speechSynthesis;
 const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -9,17 +10,16 @@ function voiceOptions(){voices=(synth?.getVoices()||[]).filter(v=>/^it(?:-|_)/i.
 function renderVoices(){
  voiceOptions();$('voices').replaceChildren();
  for(const speaker of speakers){
- const box=document.createElement('div'),label=document.createElement('label'),gender=document.createElement('select'),select=document.createElement('select'),preview=document.createElement('button');
+ const box=document.createElement('div'),label=document.createElement('label'),gender=document.createElement('select'),select=document.createElement('select'),preview=document.createElement('button'),note=document.createElement('p');note.className='small';
  label.textContent=`Голос: ${speaker}`;gender.setAttribute('aria-label',`Тип голосу для ${speaker}`);select.setAttribute('aria-label',`Доступний голос для ${speaker}`);
  for(const [value,text] of [['unknown','Виберіть тип голосу'],['female','Жіночий'],['male','Чоловічий']])gender.add(new Option(text,value));
  const saved=choices.get(speaker);gender.value=saved?.gender||guessGender(speaker);
  function fill(){select.replaceChildren();select.add(new Option('Автоматичний італійський голос',''));for(const v of voices)select.add(new Option(v.name,v.voiceURI));
- const match=voices.find(v=>(gender.value==='female'?/elsa|alice|federica|paola|isabella|female/i:gender.value==='male'?/diego|luca|cosimo|paolo|male/i:/$a/).test(v.name));
- select.value=saved?.voice&&voices.some(v=>v.voiceURI===saved.voice)?saved.voice:match?.voiceURI||'';save();}
- function save(){choices.set(speaker,{gender:gender.value,voice:select.value});}
- gender.onchange=()=>{const match=voices.find(v=>(gender.value==='female'?/elsa|alice|federica|paola|isabella|female/i:gender.value==='male'?/diego|luca|cosimo|paolo|male/i:/$a/).test(v.name));select.value=match?.voiceURI||'';save();};select.onchange=save;fill();
+ select.value=saved?.voice&&voices.some(v=>v.voiceURI===saved.voice)?saved.voice:preferredVoice(voices,gender.value)?.voiceURI||'';save();}
+ function save(){choices.set(speaker,{gender:gender.value,voice:select.value});note.textContent=gender.value==='male'&&!preferredVoice(voices,'male')?'Відомого чоловічого італійського голосу немає серед доступних. Прослухайте голоси вручну або спробуйте Microsoft Edge з італійським голосом Diego чи Windows із Cosimo. Зміна типу ролі сама по собі не змінює стать голосу.':!voices.length?'Італійські голоси ще не доступні. Додайте італійську мову в налаштуваннях озвучення пристрою.':'';}
+ gender.onchange=()=>{select.value=preferredVoice(voices,gender.value)?.voiceURI||'';save();};select.onchange=save;fill();
  preview.textContent='▶ Послухати';preview.onclick=()=>{cancel();say('Ciao! Parliamo italiano insieme.',speaker);};
- box.append(label,gender,select,preview);$('voices').append(box);
+ box.append(label,gender,select,preview,note);$('voices').append(box);
  }
 }
 function say(text,speaker,done){
@@ -39,13 +39,13 @@ $('dialog').addEventListener('input',()=>{cancel();$('roles').hidden=true;$('pra
 synth?.addEventListener('voiceschanged',()=>{if(!$('roles').hidden)renderVoices();});
 function turn(){
  if(!active)return;
- $('feedback').textContent='';$('hintText').hidden=true;$('continue').hidden=true;$('restart').hidden=true;$('fallback').hidden=true;$('typed').value='';
+ $('feedback').textContent='';$('line').hidden=false;$('toggleText').textContent='Приховати текст';$('toggleText').setAttribute('aria-expanded','true');$('continue').hidden=true;$('restart').hidden=true;$('fallback').hidden=true;$('typed').value='';
  $('progress').textContent=`${Math.min(position+1,lines.length)} / ${lines.length}`;
- if(position>=lines.length){status('Bravissima! Діалог завершено. Спробуйте ще раз, змінивши роль.');$('speaker').textContent='FINE';$('line').textContent='До наступної розмови!';$('restart').hidden=false;$('listen').disabled=true;active=false;return;}
+ if(position>=lines.length){status('Bravissima! Діалог завершено. Спробуйте ще раз, змінивши роль.');$('toggleText').hidden=true;$('speaker').textContent='FINE';$('line').textContent='До наступної розмови!';$('restart').hidden=false;$('listen').disabled=true;active=false;return;}
  const line=lines[position],mine=line.speaker===$('role').value;
  $('speaker').textContent=mine?`${line.speaker} · ваша черга`:line.speaker;
- $('line').textContent=mine?'Тепер ваша репліка…':line.text;
- $('repeat').disabled=mine;$('hint').disabled=!mine;$('listen').disabled=!mine;
+ $('line').textContent=line.text;
+ $('repeat').disabled=mine;$('toggleText').hidden=!mine;$('listen').disabled=!mine;
  if(mine){status('Скажіть свою репліку італійською.');if(Recognition)listen();else{status('Голосове розпізнавання недоступне. Спробуйте Chrome або введіть відповідь текстом.');$('fallback').hidden=false;$('listen').disabled=true;}}
  else {status('Слухайте співрозмовника…');say(line.text,line.speaker,()=>{position++;turn();});}
 }
@@ -67,7 +67,7 @@ function check(heard){
 }
 function start(){cancel();$('error').textContent='';if(speakers.some(name=>name!==$('role').value&&choices.get(name)?.gender==='unknown')){$('error').textContent='Виберіть чоловічий або жіночий голос для співрозмовника у налаштуваннях ролей.';return;}if(!synth){$('error').textContent='Цей браузер не підтримує озвучення. Спробуйте актуальний Chrome, Edge або Safari.';return;}active=true;position=0;$('practice').hidden=false;turn();$('practice').scrollIntoView({behavior:'smooth',block:'start'});}
 $('start').onclick=start;$('restart').onclick=start;$('listen').onclick=listen;
-$('hint').onclick=()=>{if(!lines[position])return;$('hintText').textContent=lines[position].text;$('hintText').hidden=!$('hintText').hidden;};
+$('toggleText').onclick=()=>{const hide=!$('line').hidden;$('line').hidden=hide;$('toggleText').textContent=hide?'Показати текст':'Приховати текст';$('toggleText').setAttribute('aria-expanded',String(!hide));};
 $('repeat').onclick=()=>{if(active&&!speaking&&lines[position])say(lines[position].text,lines[position].speaker);};
 $('continue').onclick=()=>{if(!active)return;recognition?.abort();recognition=null;epoch++;position++;turn();};
 $('stop').onclick=()=>{cancel();status('Розмову зупинено. Натисніть «Почати ще раз», коли будете готові.');$('restart').hidden=false;$('continue').hidden=true;$('listen').disabled=true;};
