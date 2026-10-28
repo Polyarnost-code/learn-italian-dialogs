@@ -39,13 +39,17 @@ $('dialog').addEventListener('input',()=>{cancel();$('roles').hidden=true;$('pra
 synth?.addEventListener('voiceschanged',()=>{if(!$('roles').hidden)renderVoices();});
 function turn(){
  if(!active)return;
- $('feedback').textContent='';$('line').hidden=false;$('toggleText').textContent='Приховати текст';$('toggleText').setAttribute('aria-expanded','true');$('continue').hidden=true;$('restart').hidden=true;$('fallback').hidden=true;$('typed').value='';
+ $('feedback').textContent='';$('line').hidden=false;$('learnerLine').hidden=false;$('toggleText').textContent='Приховати текст';$('toggleText').setAttribute('aria-expanded','true');$('continue').hidden=true;$('restart').hidden=true;$('fallback').hidden=true;$('typed').value='';
  $('progress').textContent=`${Math.min(position+1,lines.length)} / ${lines.length}`;
- if(position>=lines.length){status('Bravissima! Діалог завершено. Спробуйте ще раз, змінивши роль.');$('toggleText').hidden=true;$('speaker').textContent='FINE';$('line').textContent='До наступної розмови!';$('restart').hidden=false;$('listen').disabled=true;active=false;return;}
+ if(position>=lines.length){status('Bravissima! Діалог завершено. Спробуйте ще раз, змінивши роль.');$('learnerCard').hidden=true;$('toggleText').hidden=true;$('speaker').textContent='FINE';$('line').textContent='До наступної розмови!';$('restart').hidden=false;$('listen').disabled=true;active=false;return;}
  const line=lines[position],mine=line.speaker===$('role').value;
  $('speaker').textContent=mine?`${line.speaker} · ваша черга`:line.speaker;
- $('line').textContent=line.text;
- $('repeat').disabled=mine;$('toggleText').hidden=!mine;$('listen').disabled=!mine;
+ $('line').textContent=mine?'Ваша черга відповідати':line.text;
+ const nextReply=lines.slice(position).find(reply=>reply.speaker===$('role').value);
+ $('learnerCard').hidden=!nextReply;
+ $('learnerLabel').textContent=mine?`${$('role').value} · скажіть цю репліку`:`${$('role').value} · ваша наступна репліка`;
+ $('learnerLine').textContent=nextReply?.text||'';
+ $('repeat').disabled=mine;$('toggleText').hidden=!nextReply;$('listen').disabled=!mine;
  if(mine){status('Скажіть свою репліку італійською.');if(Recognition)listen();else{status('Голосове розпізнавання недоступне. Спробуйте Chrome або введіть відповідь текстом.');$('fallback').hidden=false;$('listen').disabled=true;}}
  else {status('Слухайте співрозмовника…');say(line.text,line.speaker,()=>{position++;turn();});}
 }
@@ -67,7 +71,7 @@ function check(heard){
 }
 function start(){cancel();$('error').textContent='';if(speakers.some(name=>name!==$('role').value&&choices.get(name)?.gender==='unknown')){$('error').textContent='Виберіть чоловічий або жіночий голос для співрозмовника у налаштуваннях ролей.';return;}if(!synth){$('error').textContent='Цей браузер не підтримує озвучення. Спробуйте актуальний Chrome, Edge або Safari.';return;}active=true;position=0;$('practice').hidden=false;turn();$('practice').scrollIntoView({behavior:'smooth',block:'start'});}
 $('start').onclick=start;$('restart').onclick=start;$('listen').onclick=listen;
-$('toggleText').onclick=()=>{const hide=!$('line').hidden;$('line').hidden=hide;$('toggleText').textContent=hide?'Показати текст':'Приховати текст';$('toggleText').setAttribute('aria-expanded',String(!hide));};
+$('toggleText').onclick=()=>{const hide=!$('learnerLine').hidden;$('learnerLine').hidden=hide;$('toggleText').textContent=hide?'Показати текст':'Приховати текст';$('toggleText').setAttribute('aria-expanded',String(!hide));};
 $('repeat').onclick=()=>{if(active&&!speaking&&lines[position])say(lines[position].text,lines[position].speaker);};
 $('continue').onclick=()=>{if(!active)return;recognition?.abort();recognition=null;epoch++;position++;turn();};
 $('stop').onclick=()=>{cancel();status('Розмову зупинено. Натисніть «Почати ще раз», коли будете готові.');$('restart').hidden=false;$('continue').hidden=true;$('listen').disabled=true;};
