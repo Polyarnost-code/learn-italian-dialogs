@@ -15,7 +15,8 @@ test('learner card shows upcoming reply during computer speech, toggles and rese
  get('prepare').onclick();get('role').value='Marco';get('start').onclick();
  assert.equal(get('learnerCard').hidden,false);assert.equal(get('learnerLine').textContent,'Ciao Anna!');assert.equal(get('learnerLine').hidden,false);
  get('toggleText').onclick();assert.equal(get('learnerLine').hidden,true);assert.equal(get('toggleText').textContent,'Показати текст');
- utterances.at(-1).onend();assert.equal(get('learnerLine').hidden,false);assert.equal(get('learnerLine').textContent,'Ciao Anna!');
+ utterances.at(-1).onend();assert.equal(get('roleAvatar').hidden,false);assert.equal(get('roleAvatar').className,'role-avatar role-avatar--male');assert.equal(get('learnerLine').hidden,false);assert.equal(get('learnerLine').textContent,'Ciao Anna!');
  get('typed').value='Ciao Anna!';get('check').onclick();assert.equal(get('learnerLine').textContent,'Bene, grazie.');
- utterances.at(-1).onend();get('typed').value='Bene, grazie.';get('check').onclick();assert.equal(get('learnerCard').hidden,true);
+ utterances.at(-1).onend();get('typed').value='Bene, grazie.';get('check').onclick();assert.equal(get('learnerCard').hidden,true);assert.equal(get('roleAvatar').hidden,true);
+ get('role').value='Anna';get('restart').onclick();assert.equal(get('roleAvatar').hidden,false);assert.equal(get('roleAvatar').className,'role-avatar role-avatar--female');
 });
