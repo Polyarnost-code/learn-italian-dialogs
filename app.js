@@ -1,4 +1,4 @@
-import {preferredVoice} from './voices.js';
+import {preferredVoice,orderedVoices,voiceLabel} from './voices.js?v=2';
 import {parseDialog,guessGender,compareReply} from './dialog.js';
 const $=id=>document.getElementById(id),synth=window.speechSynthesis;
 const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -6,7 +6,7 @@ let lines=[],speakers=[],voices=[],position=0,active=false,recognition=null,epoc
 const choices=new Map();
 function status(text){$('status').textContent=text;}
 function cancel(){active=false;epoch++;recognition?.abort();recognition=null;synth?.cancel();speaking=false;$('listen').disabled=false;}
-function voiceOptions(){voices=(synth?.getVoices()||[]).filter(v=>/^it(?:-|_)/i.test(v.lang));}
+function voiceOptions(){voices=orderedVoices(synth?.getVoices()||[]);}
 function renderVoices(){
  voiceOptions();$('voices').replaceChildren();
  for(const speaker of speakers){
@@ -14,7 +14,7 @@ function renderVoices(){
  label.textContent=`Голос: ${speaker}`;gender.setAttribute('aria-label',`Тип голосу для ${speaker}`);select.setAttribute('aria-label',`Доступний голос для ${speaker}`);
  for(const [value,text] of [['unknown','Виберіть тип голосу'],['female','Жіночий'],['male','Чоловічий']])gender.add(new Option(text,value));
  const saved=choices.get(speaker);gender.value=saved?.gender||guessGender(speaker);
- function fill(){select.replaceChildren();select.add(new Option('Автоматичний італійський голос',''));for(const v of voices)select.add(new Option(v.name,v.voiceURI));
+ function fill(){select.replaceChildren();for(const v of voices)select.add(new Option(voiceLabel(v),v.voiceURI));select.add(new Option('Автоматичний італійський голос',''));
  select.value=saved?.voice&&voices.some(v=>v.voiceURI===saved.voice)?saved.voice:preferredVoice(voices,gender.value)?.voiceURI||'';save();}
  function save(){choices.set(speaker,{gender:gender.value,voice:select.value});note.textContent=gender.value==='male'&&!preferredVoice(voices,'male')?'Відомого чоловічого італійського голосу немає серед доступних. Прослухайте голоси вручну або спробуйте Microsoft Edge з італійським голосом Diego чи Windows із Cosimo. Зміна типу ролі сама по собі не змінює стать голосу.':!voices.length?'Італійські голоси ще не доступні. Додайте італійську мову в налаштуваннях озвучення пристрою.':'';}
  gender.onchange=()=>{select.value=preferredVoice(voices,gender.value)?.voiceURI||'';save();};select.onchange=save;fill();

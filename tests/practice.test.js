@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import {parseDialog,guessGender,compareReply} from '../dialog.js';
-import {preferredVoice} from '../voices.js';
+import {preferredVoice,orderedVoices,voiceLabel} from '../voices.js';
 test('learner card shows upcoming reply during computer speech, toggles and resets for next turn',async()=>{
  const elements=new Map();
  const element=()=>({hidden:false,value:'',textContent:'',children:[],setAttribute(){},addEventListener(){},scrollIntoView(){},replaceChildren(...items){this.children=items;this.value=items[0]?.value||'';},append(){},add(option){this.children.push(option);}});
  const get=id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);};
  const utterances=[];
- const context={document:{getElementById:get,createElement:element},window:{speechSynthesis:{getVoices:()=>[],cancel(){},speak(u){utterances.push(u);},addEventListener(){}},addEventListener(){}},SpeechSynthesisUtterance:function(text){this.text=text;},Option:function(text,value){this.text=text;this.value=value;},parseDialog,guessGender,compareReply,preferredVoice};
+ const context={document:{getElementById:get,createElement:element},window:{speechSynthesis:{getVoices:()=>[],cancel(){},speak(u){utterances.push(u);},addEventListener(){}},addEventListener(){}},SpeechSynthesisUtterance:function(text){this.text=text;},Option:function(text,value){this.text=text;this.value=value;},parseDialog,guessGender,compareReply,preferredVoice,orderedVoices,voiceLabel};
  let source=await readFile(new URL('../app.js',import.meta.url),'utf8');source=source.replace(/^import .*;\n/gm,'');vm.runInNewContext(source,context);
  get('dialog').value='Anna: Ciao Marco!\nMarco: Ciao Anna!\nAnna: Come stai?\nMarco: Bene, grazie.';
  get('prepare').onclick();get('role').value='Marco';get('start').onclick();
