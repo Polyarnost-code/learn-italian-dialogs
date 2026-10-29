@@ -44,8 +44,8 @@ function turn(){
  if(position>=lines.length){status('Bravissima! Діалог завершено. Спробуйте ще раз, змінивши роль.');$('learnerCard').hidden=true;$('toggleText').hidden=true;$('speaker').textContent='FINE';$('line').textContent='До наступної розмови!';$('restart').hidden=false;$('listen').disabled=true;active=false;return;}
  const line=lines[position],mine=line.speaker===$('role').value;
  $('speaker').textContent=mine?`${line.speaker} · ваша черга`:line.speaker;
- const gender=choices.get($('role').value)?.gender||guessGender($('role').value);
- $('roleAvatar').hidden=!mine||!['female','male'].includes(gender);
+ const gender=choices.get(line.speaker)?.gender||guessGender(line.speaker);
+ $('roleAvatar').hidden=!['female','male'].includes(gender);
  $('roleAvatar').className=`role-avatar role-avatar--${gender}`;
  $('roleAvatar').setAttribute('aria-label',gender==='female'?'Аватарка жіночої ролі':'Аватарка чоловічої ролі');
  $('line').textContent=mine?'Ваша черга відповідати':line.text;

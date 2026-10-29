@@ -13,10 +13,12 @@ test('learner card shows upcoming reply during computer speech, toggles and rese
  let source=await readFile(new URL('../app.js',import.meta.url),'utf8');source=source.replace(/^import .*;\n/gm,'');vm.runInNewContext(source,context);
  get('dialog').value='Anna: Ciao Marco!\nMarco: Ciao Anna!\nAnna: Come stai?\nMarco: Bene, grazie.';
  get('prepare').onclick();get('role').value='Marco';get('start').onclick();
+ assert.equal(get('roleAvatar').hidden,false);assert.equal(get('roleAvatar').className,'role-avatar role-avatar--female');
  assert.equal(get('learnerCard').hidden,false);assert.equal(get('learnerLine').textContent,'Ciao Anna!');assert.equal(get('learnerLine').hidden,false);
  get('toggleText').onclick();assert.equal(get('learnerLine').hidden,true);assert.equal(get('toggleText').textContent,'Показати текст');
  utterances.at(-1).onend();assert.equal(get('roleAvatar').hidden,false);assert.equal(get('roleAvatar').className,'role-avatar role-avatar--male');assert.equal(get('learnerLine').hidden,false);assert.equal(get('learnerLine').textContent,'Ciao Anna!');
- get('typed').value='Ciao Anna!';get('check').onclick();assert.equal(get('learnerLine').textContent,'Bene, grazie.');
+ get('typed').value='Ciao Anna!';get('check').onclick();assert.equal(get('learnerLine').textContent,'Bene, grazie.');assert.equal(get('roleAvatar').hidden,false);assert.equal(get('roleAvatar').className,'role-avatar role-avatar--female');
  utterances.at(-1).onend();get('typed').value='Bene, grazie.';get('check').onclick();assert.equal(get('learnerCard').hidden,true);assert.equal(get('roleAvatar').hidden,true);
  get('role').value='Anna';get('restart').onclick();assert.equal(get('roleAvatar').hidden,false);assert.equal(get('roleAvatar').className,'role-avatar role-avatar--female');
+ get('typed').value='Ciao Marco!';get('check').onclick();assert.equal(get('roleAvatar').hidden,false);assert.equal(get('roleAvatar').className,'role-avatar role-avatar--male');
 });
